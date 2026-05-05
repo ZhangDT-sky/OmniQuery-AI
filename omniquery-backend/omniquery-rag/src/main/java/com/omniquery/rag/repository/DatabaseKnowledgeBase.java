@@ -2,6 +2,7 @@ package com.omniquery.rag.repository;
 
 import com.omniquery.rag.model.ExampleSqlDocument;
 import com.omniquery.rag.model.SchemaDocument;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
@@ -23,9 +24,16 @@ public class DatabaseKnowledgeBase implements KnowledgeBase {
     private static final List<String> DEFAULT_ROLES = List.of("admin", "user");
 
     private final DataSource dataSource;
+    private final ExampleSqlCatalog exampleSqlCatalog;
 
     public DatabaseKnowledgeBase(DataSource dataSource) {
+        this(dataSource, new ExampleSqlCatalog());
+    }
+
+    @Autowired
+    public DatabaseKnowledgeBase(DataSource dataSource, ExampleSqlCatalog exampleSqlCatalog) {
         this.dataSource = dataSource;
+        this.exampleSqlCatalog = exampleSqlCatalog;
     }
 
     @Override
@@ -49,7 +57,7 @@ public class DatabaseKnowledgeBase implements KnowledgeBase {
 
     @Override
     public List<ExampleSqlDocument> examples() {
-        return List.of();
+        return exampleSqlCatalog.documents();
     }
 
     private Map<String, MutableTable> scanTables(DatabaseMetaData metadata, String catalog) throws SQLException {

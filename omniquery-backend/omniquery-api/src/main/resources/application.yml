@@ -1,6 +1,8 @@
 spring:
   application:
     name: omniquery-api
+  config:
+    import: optional:classpath:omniquery-examples.yml
   profiles:
     group:
       mysql: external-db

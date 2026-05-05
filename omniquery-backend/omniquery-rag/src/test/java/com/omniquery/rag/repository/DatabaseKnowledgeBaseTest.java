@@ -29,4 +29,23 @@ class DatabaseKnowledgeBaseTest {
         assertTrue(schemas.get(0).columns().contains("total_amount DECIMAL"));
         assertTrue(schemas.get(0).columns().contains("tenant_id CHARACTER VARYING"));
     }
+
+    @Test
+    void returnsConfiguredExamplesForExternalDatabases() {
+        ExampleSqlCatalog catalog = new ExampleSqlCatalog();
+        ExampleSqlCatalog.ConfiguredExample example = new ExampleSqlCatalog.ConfiguredExample();
+        example.setQuestion("paid orders by customer");
+        example.setSql("SELECT c.name FROM customers c JOIN orders o ON o.customer_id = c.id WHERE o.status = 'PAID' LIMIT 100");
+        example.setTables(java.util.List.of("customers", "orders"));
+        example.setExplanation("Join customers and orders for paid orders");
+        catalog.setExamples(java.util.List.of(example));
+
+        DatabaseKnowledgeBase knowledgeBase = new DatabaseKnowledgeBase(new DriverManagerDataSource(), catalog);
+
+        var examples = knowledgeBase.examples();
+
+        assertEquals(1, examples.size());
+        assertEquals("paid orders by customer", examples.get(0).question());
+        assertEquals(java.util.List.of("customers", "orders"), examples.get(0).tables());
+    }
 }
