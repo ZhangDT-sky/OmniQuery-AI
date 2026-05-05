@@ -35,9 +35,9 @@ omniquery:
       password: ${OMNIQUERY_VECTOR_PASSWORD:root}
       dimensions: ${OMNIQUERY_VECTOR_DIMENSIONS:1024}
     embedding:
-      api-key: ${MODEL_API_KEY:}
-      base-url: ${OMNIQUERY_EMBEDDING_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
-      model: ${OMNIQUERY_EMBEDDING_MODEL:text-embedding-v4}
+      api-key: ${EMBEDDING_API_KEY:}
+      base-url: ${OMNIQUERY_EMBEDDING_BASE_URL:https://api.siliconflow.cn/v1/embeddings}
+      model: ${OMNIQUERY_EMBEDDING_MODEL:Qwen/Qwen3-Embedding-8B}
 
 logging:
   level:

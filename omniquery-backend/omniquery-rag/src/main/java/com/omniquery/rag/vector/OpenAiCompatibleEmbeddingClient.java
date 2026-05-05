@@ -11,20 +11,20 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
 
-public class DashScopeEmbeddingClient implements TextEmbeddingClient {
+public class OpenAiCompatibleEmbeddingClient implements TextEmbeddingClient {
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String apiKey;
-    private final String baseUrl;
+    private final String endpoint;
     private final String model;
     private final int dimensions;
 
-    public DashScopeEmbeddingClient(String apiKey, String baseUrl, String model, int dimensions) {
+    public OpenAiCompatibleEmbeddingClient(String apiKey, String endpoint, String model, int dimensions) {
         this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
         this.objectMapper = new ObjectMapper();
         this.apiKey = apiKey;
-        this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        this.endpoint = normalizeEndpoint(endpoint);
         this.model = model;
         this.dimensions = dimensions;
     }
@@ -32,7 +32,7 @@ public class DashScopeEmbeddingClient implements TextEmbeddingClient {
     @Override
     public float[] embed(String text) {
         if (apiKey == null || apiKey.isBlank()) {
-            throw new IllegalStateException("MODEL_API_KEY is required for vector RAG embeddings");
+            throw new IllegalStateException("EMBEDDING_API_KEY is required for vector RAG embeddings");
         }
         try {
             String requestJson = objectMapper.writeValueAsString(Map.of(
@@ -42,7 +42,7 @@ public class DashScopeEmbeddingClient implements TextEmbeddingClient {
                 "encoding_format", "float"
             ));
             HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/embeddings"))
+                .uri(URI.create(endpoint))
                 .timeout(Duration.ofSeconds(30))
                 .header("Authorization", "Bearer " + apiKey)
                 .header("Content-Type", "application/json")
@@ -67,5 +67,10 @@ public class DashScopeEmbeddingClient implements TextEmbeddingClient {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Embedding request interrupted", ex);
         }
+    }
+
+    private String normalizeEndpoint(String value) {
+        String normalized = value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
+        return normalized.endsWith("/embeddings") ? normalized : normalized + "/embeddings";
     }
 }

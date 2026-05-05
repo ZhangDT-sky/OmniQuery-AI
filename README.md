@@ -90,6 +90,22 @@ Combine profiles when querying a real database:
 mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=llm,mysql
 ```
 
+## Run With Vector RAG
+
+The `vector-rag` profile stores schema/example embeddings in pgvector. By default, it connects to `jdbc:postgresql://localhost:5432/postgres` with `postgres/root`, reads the embedding key from `EMBEDDING_API_KEY`, and calls SiliconFlow's OpenAI-compatible embedding endpoint with `Qwen/Qwen3-Embedding-8B`.
+
+```powershell
+cd omniquery-backend
+$env:EMBEDDING_API_KEY='your-siliconflow-api-key'
+mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=vector-rag
+```
+
+Use it together with the real LLM path:
+
+```powershell
+mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=llm,vector-rag
+```
+
 ## Read-Only MCP Tools
 
 OmniQuery also exposes a lightweight JSON-RPC tool endpoint at `/api/mcp`. The endpoint is intentionally read-only: `safe_query` reuses the same NL2SQL engine, SQL guard, ACL rewrite, and JDBC execution path as the HTTP API.

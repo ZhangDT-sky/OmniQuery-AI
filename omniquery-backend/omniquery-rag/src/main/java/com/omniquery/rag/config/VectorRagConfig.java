@@ -1,7 +1,7 @@
 package com.omniquery.rag.config;
 
 import com.omniquery.rag.repository.KnowledgeBase;
-import com.omniquery.rag.vector.DashScopeEmbeddingClient;
+import com.omniquery.rag.vector.OpenAiCompatibleEmbeddingClient;
 import com.omniquery.rag.vector.PgVectorSearchService;
 import com.omniquery.rag.vector.PgVectorStore;
 import com.omniquery.rag.vector.TextEmbeddingClient;
@@ -40,7 +40,7 @@ public class VectorRagConfig {
         @Value("${omniquery.rag.embedding.model}") String model,
         @Value("${omniquery.rag.vector.dimensions}") int dimensions
     ) {
-        return new DashScopeEmbeddingClient(apiKey, baseUrl, model, dimensions);
+        return new OpenAiCompatibleEmbeddingClient(apiKey, baseUrl, model, dimensions);
     }
 
     @Bean
