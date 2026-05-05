@@ -1,0 +1,31 @@
+# IDE
+.idea/
+.vscode/
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Node / frontend
+node_modules/
+dist/
+build/
+
+# Logs and runtime output
+*.log
+logs/
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Archived/generated legacy material kept locally only
+archive/

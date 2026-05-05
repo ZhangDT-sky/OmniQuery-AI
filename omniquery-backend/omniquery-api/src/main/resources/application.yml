@@ -1,0 +1,72 @@
+spring:
+  application:
+    name: omniquery-api
+  profiles:
+    group:
+      mysql: external-db
+      postgres: external-db
+  datasource:
+    url: jdbc:h2:mem:omniquery;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  sql:
+    init:
+      mode: always
+
+omniquery:
+  security:
+    max-rows: ${OMNIQUERY_MAX_ROWS:100}
+    max-joins: ${OMNIQUERY_MAX_JOINS:3}
+    query-timeout-seconds: ${OMNIQUERY_QUERY_TIMEOUT_SECONDS:10}
+    dangerous-functions:
+      - sleep
+      - benchmark
+      - load_file
+  llm:
+    provider: openai-compatible
+    api-key: ${MODEL_API_KEY:}
+    base-url: ${OMNIQUERY_LLM_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+    model-name: ${OMNIQUERY_LLM_MODEL:kimi-k2.6}
+  rag:
+    vector:
+      jdbc-url: ${OMNIQUERY_VECTOR_JDBC_URL:jdbc:postgresql://localhost:5432/postgres}
+      username: ${OMNIQUERY_VECTOR_USERNAME:postgres}
+      password: ${OMNIQUERY_VECTOR_PASSWORD:root}
+      dimensions: ${OMNIQUERY_VECTOR_DIMENSIONS:1024}
+    embedding:
+      api-key: ${MODEL_API_KEY:}
+      base-url: ${OMNIQUERY_EMBEDDING_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+      model: ${OMNIQUERY_EMBEDDING_MODEL:text-embedding-v4}
+
+logging:
+  level:
+    com.omniquery: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: mysql
+  datasource:
+    url: ${OMNIQUERY_MYSQL_URL:jdbc:mysql://localhost:3306/data_agent?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai}
+    username: ${OMNIQUERY_MYSQL_USERNAME:root}
+    password: ${OMNIQUERY_MYSQL_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      mode: never
+
+---
+spring:
+  config:
+    activate:
+      on-profile: postgres
+  datasource:
+    url: ${OMNIQUERY_POSTGRES_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${OMNIQUERY_POSTGRES_USERNAME:postgres}
+    password: ${OMNIQUERY_POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: never
