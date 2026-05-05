@@ -13,23 +13,18 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
-import javax.sql.DataSource;
-
 @Configuration
 @Profile("vector-rag")
 public class VectorRagConfig {
 
     @Bean
-    DataSource vectorDataSource(
+    PgVectorStore pgVectorStore(
         @Value("${omniquery.rag.vector.jdbc-url}") String jdbcUrl,
         @Value("${omniquery.rag.vector.username}") String username,
-        @Value("${omniquery.rag.vector.password}") String password
+        @Value("${omniquery.rag.vector.password}") String password,
+        @Value("${omniquery.rag.vector.dimensions}") int dimensions
     ) {
-        return new DriverManagerDataSource(jdbcUrl, username, password);
-    }
-
-    @Bean
-    PgVectorStore pgVectorStore(DataSource vectorDataSource, @Value("${omniquery.rag.vector.dimensions}") int dimensions) {
+        DriverManagerDataSource vectorDataSource = new DriverManagerDataSource(jdbcUrl, username, password);
         return new PgVectorStore(new JdbcTemplate(vectorDataSource), dimensions);
     }
 

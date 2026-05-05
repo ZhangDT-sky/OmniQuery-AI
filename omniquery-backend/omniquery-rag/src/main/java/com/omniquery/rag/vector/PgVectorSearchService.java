@@ -32,6 +32,7 @@ public class PgVectorSearchService implements VectorSearchService {
     public void indexKnowledgeBase() {
         try {
             vectorStore.initialize();
+            vectorStore.clear();
             for (SchemaDocument schema : knowledgeBase.schemas()) {
                 String id = "schema:" + schema.tableName();
                 schemasById.put(id, schema);

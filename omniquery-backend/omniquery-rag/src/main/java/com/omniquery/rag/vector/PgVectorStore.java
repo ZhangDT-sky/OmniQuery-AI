@@ -27,6 +27,10 @@ public class PgVectorStore {
         jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS omniquery_rag_documents_embedding_idx ON omniquery_rag_documents USING hnsw (embedding vector_cosine_ops)");
     }
 
+    public void clear() {
+        jdbcTemplate.update("DELETE FROM omniquery_rag_documents");
+    }
+
     public void upsert(String id, String kind, String text, float[] embedding) {
         jdbcTemplate.update("""
             INSERT INTO omniquery_rag_documents (id, kind, text, embedding)
