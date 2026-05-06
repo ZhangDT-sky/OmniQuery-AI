@@ -2,7 +2,7 @@
 
 OmniQuery AI 是一个小而精的 Java/Spring Boot NL2SQL 查询引擎。它聚焦一件事：把自然语言问题转换成可审计、可控、可追踪的只读 SQL 查询。
 
-这个项目不是大而全的 Agent 平台，也不强调多智能体概念。它更适合作为简历项目展示：真实数据库接入、Schema-RAG、LangChain4j SQL 生成、SQL 安全网关、ACL 多租户隔离和测试覆盖。
+这个项目不是大而全的 Agent 平台，也不强调多智能体概念。它的重点是真实数据库接入、Schema-RAG、LangChain4j SQL 生成、SQL 安全网关、ACL 多租户隔离和测试覆盖。
 
 ## 核心链路
 
@@ -41,9 +41,15 @@ omniquery-frontend/   极简 React 查询界面
 scripts/              真实 MySQL demo 脚本
 ```
 
+## 命令说明
+
+下面的 Windows 命令同时提供 PowerShell 和 cmd 两个版本。
+
 ## 环境变量
 
 LLM：
+
+PowerShell：
 
 ```powershell
 $env:MODEL_API_KEY='your-api-key'
@@ -51,7 +57,17 @@ $env:OMNIQUERY_LLM_BASE_URL='https://dashscope.aliyuncs.com/compatible-mode/v1'
 $env:OMNIQUERY_LLM_MODEL='kimi-k2.6'
 ```
 
+cmd：
+
+```cmd
+set MODEL_API_KEY=your-api-key
+set OMNIQUERY_LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+set OMNIQUERY_LLM_MODEL=kimi-k2.6
+```
+
 Embedding：
+
+PowerShell：
 
 ```powershell
 $env:EMBEDDING_API_KEY='your-siliconflow-api-key'
@@ -59,12 +75,30 @@ $env:OMNIQUERY_EMBEDDING_BASE_URL='https://api.siliconflow.cn/v1/embeddings'
 $env:OMNIQUERY_EMBEDDING_MODEL='Qwen/Qwen3-Embedding-8B'
 ```
 
+cmd：
+
+```cmd
+set EMBEDDING_API_KEY=your-siliconflow-api-key
+set OMNIQUERY_EMBEDDING_BASE_URL=https://api.siliconflow.cn/v1/embeddings
+set OMNIQUERY_EMBEDDING_MODEL=Qwen/Qwen3-Embedding-8B
+```
+
 MySQL：
+
+PowerShell：
 
 ```powershell
 $env:OMNIQUERY_MYSQL_URL='jdbc:mysql://localhost:3306/omniquery_demo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai'
 $env:OMNIQUERY_MYSQL_USERNAME='root'
 $env:OMNIQUERY_MYSQL_PASSWORD='root'
+```
+
+cmd：
+
+```cmd
+set OMNIQUERY_MYSQL_URL=jdbc:mysql://localhost:3306/omniquery_demo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+set OMNIQUERY_MYSQL_USERNAME=root
+set OMNIQUERY_MYSQL_PASSWORD=root
 ```
 
 pgvector 默认连接：
@@ -79,7 +113,17 @@ password: root
 
 默认 profile 使用内存 H2 数据库，可以快速验证基础链路。
 
+PowerShell：
+
 ```powershell
+cd omniquery-backend
+mvn test
+mvn -pl omniquery-api -am spring-boot:run
+```
+
+cmd：
+
+```cmd
 cd omniquery-backend
 mvn test
 mvn -pl omniquery-api -am spring-boot:run
@@ -87,8 +131,16 @@ mvn -pl omniquery-api -am spring-boot:run
 
 调用查询接口：
 
+PowerShell：
+
 ```powershell
 Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType 'application/json' -Body '{"question":"show recent orders with customer names","tenantId":"tenant_a"}'
+```
+
+cmd：
+
+```cmd
+curl -X POST http://localhost:8080/api/query -H "Content-Type: application/json" -d "{\"question\":\"show recent orders with customer names\",\"tenantId\":\"tenant_a\"}"
 ```
 
 ## 真实 MySQL Demo
@@ -104,33 +156,74 @@ Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType
 
 一键初始化并启动：
 
+PowerShell：
+
 ```powershell
 .\scripts\run-mysql-demo.ps1 -Build
 ```
 
+cmd：
+
+```cmd
+powershell -ExecutionPolicy Bypass -File scripts\run-mysql-demo.ps1 -Build
+```
+
 如果已经构建过，只想重新初始化 MySQL 并启动：
+
+PowerShell：
 
 ```powershell
 .\scripts\run-mysql-demo.ps1
 ```
 
+cmd：
+
+```cmd
+powershell -ExecutionPolicy Bypass -File scripts\run-mysql-demo.ps1
+```
+
 如果想跳过初始化：
+
+PowerShell：
 
 ```powershell
 .\scripts\run-mysql-demo.ps1 -SkipInit
 ```
 
+cmd：
+
+```cmd
+powershell -ExecutionPolicy Bypass -File scripts\run-mysql-demo.ps1 -SkipInit
+```
+
 自定义 MySQL 连接：
+
+PowerShell：
 
 ```powershell
 .\scripts\run-mysql-demo.ps1 -MysqlUser root -MysqlPassword root -MysqlHost localhost -MysqlPort 3306
 ```
 
+cmd：
+
+```cmd
+powershell -ExecutionPolicy Bypass -File scripts\run-mysql-demo.ps1 -MysqlUser root -MysqlPassword root -MysqlHost localhost -MysqlPort 3306
+```
+
 验证 ACL 隔离：
+
+PowerShell：
 
 ```powershell
 Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType 'application/json' -Body '{"question":"list recent orders with customer names","tenantId":"tenant_a"}'
 Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType 'application/json' -Body '{"question":"list recent orders with customer names","tenantId":"tenant_b"}'
+```
+
+cmd：
+
+```cmd
+curl -X POST http://localhost:8080/api/query -H "Content-Type: application/json" -d "{\"question\":\"list recent orders with customer names\",\"tenantId\":\"tenant_a\"}"
+curl -X POST http://localhost:8080/api/query -H "Content-Type: application/json" -d "{\"question\":\"list recent orders with customer names\",\"tenantId\":\"tenant_b\"}"
 ```
 
 预期结果：
@@ -144,20 +237,45 @@ Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType
 
 启用 `vector-rag` 后，系统会把 schema 和配置化 examples 向量化写入 pgvector。
 
+PowerShell：
+
 ```powershell
+cd omniquery-backend
+mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=vector-rag
+```
+
+cmd：
+
+```cmd
 cd omniquery-backend
 mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=vector-rag
 ```
 
 和真实 MySQL、LLM 一起使用：
 
+PowerShell：
+
 ```powershell
+mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=mysql,llm,vector-rag
+```
+
+cmd：
+
+```cmd
 mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=mysql,llm,vector-rag
 ```
 
 可用以下 SQL 检查 pgvector 文档数量：
 
+PowerShell：
+
 ```powershell
+docker exec pgvector psql -U postgres -d postgres -c "SELECT kind, count(*) FROM omniquery_rag_documents GROUP BY kind ORDER BY kind;"
+```
+
+cmd：
+
+```cmd
 docker exec pgvector psql -U postgres -d postgres -c "SELECT kind, count(*) FROM omniquery_rag_documents GROUP BY kind ORDER BY kind;"
 ```
 
@@ -172,41 +290,58 @@ schema   2
 
 列出工具：
 
+PowerShell：
+
 ```powershell
 Invoke-RestMethod -Uri http://localhost:8080/api/mcp -Method POST -ContentType 'application/json' -Body '{"jsonrpc":"2.0","id":"1","method":"tools/list","params":{}}'
 ```
 
+cmd：
+
+```cmd
+curl -X POST http://localhost:8080/api/mcp -H "Content-Type: application/json" -d "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"tools/list\",\"params\":{}}"
+```
+
 调用 `safe_query`：
+
+PowerShell：
 
 ```powershell
 Invoke-RestMethod -Uri http://localhost:8080/api/mcp -Method POST -ContentType 'application/json' -Body '{"jsonrpc":"2.0","id":"2","method":"tools/call","params":{"name":"safe_query","arguments":{"question":"show total paid amount by customer","tenantId":"tenant_a"}}}'
+```
+
+cmd：
+
+```cmd
+curl -X POST http://localhost:8080/api/mcp -H "Content-Type: application/json" -d "{\"jsonrpc\":\"2.0\",\"id\":\"2\",\"method\":\"tools/call\",\"params\":{\"name\":\"safe_query\",\"arguments\":{\"question\":\"show total paid amount by customer\",\"tenantId\":\"tenant_a\"}}}"
 ```
 
 ## 测试
 
 后端：
 
+PowerShell：
+
 ```powershell
+mvn -f omniquery-backend\pom.xml test
+```
+
+cmd：
+
+```cmd
 mvn -f omniquery-backend\pom.xml test
 ```
 
 前端：
 
+PowerShell：
+
 ```powershell
 npm.cmd --prefix omniquery-frontend run build
 ```
 
-## 简历表述建议
+cmd：
 
-可以这样描述：
-
-> 构建轻量级 NL2SQL 查询引擎，基于 Spring Boot 和 LangChain4j 串联 Schema-RAG、结构化 SQL 生成、Druid AST 安全审计、ACL 参数化注入和 JDBC 只读执行；支持真实 MySQL schema 扫描、pgvector 向量召回、MCP 风格安全查询工具，并通过多租户 demo 验证 SQL 安全与数据隔离。
-
-不建议写：
-
-- 多智能体架构。
-- Redis 长短期记忆。
-- 覆盖率 92%。
-- 生产级安全合规。
-
-这些不是当前项目重点，也没有必要为了简历把项目做大。
+```cmd
+npm --prefix omniquery-frontend run build
+```

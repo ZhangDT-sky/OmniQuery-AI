@@ -18,12 +18,18 @@ question -> schema/example retrieval -> LangChain4j SQL generation boundary -> S
 
 - LangChain4j dependency boundary for NL2SQL generation.
 - Read-only tool calling for schema and example lookup.
-- Real schema/example retrieval instead of fake vector search.
+- Schema and example retrieval backed by pgvector when `vector-rag` is enabled.
 - Druid AST validation for SELECT-only SQL.
 - Policy-driven ACL rewrite for tenant isolation.
 - H2 demo data and JUnit coverage for reproducible evaluation.
 
+## Command Style
+
+Windows examples are provided in both PowerShell and cmd.
+
 ## Run Backend
+
+PowerShell:
 
 ```powershell
 cd omniquery-backend
@@ -31,24 +37,41 @@ mvn test
 mvn -pl omniquery-api -am spring-boot:run
 ```
 
+cmd:
+
+```cmd
+cd omniquery-backend
+mvn test
+mvn -pl omniquery-api -am spring-boot:run
+```
+
 The default profile starts an in-memory H2 demo database. For a real database, use one of the external profiles. The app scans JDBC metadata into schema retrieval and security policy at startup/runtime, and disables SQL initialization for external databases.
 
-MySQL:
+## MySQL Profile
+
+PowerShell:
 
 ```powershell
 cd omniquery-backend
-mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=mysql
-```
-
-Override the MySQL target when needed:
-
-```powershell
 $env:OMNIQUERY_MYSQL_URL='jdbc:mysql://localhost:3306/data_agent?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai'
 $env:OMNIQUERY_MYSQL_USERNAME='root'
 $env:OMNIQUERY_MYSQL_PASSWORD='root'
+mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=mysql
 ```
 
-PostgreSQL:
+cmd:
+
+```cmd
+cd omniquery-backend
+set OMNIQUERY_MYSQL_URL=jdbc:mysql://localhost:3306/data_agent?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+set OMNIQUERY_MYSQL_USERNAME=root
+set OMNIQUERY_MYSQL_PASSWORD=root
+mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=mysql
+```
+
+## PostgreSQL Profile
+
+PowerShell:
 
 ```powershell
 cd omniquery-backend
@@ -58,7 +81,19 @@ $env:OMNIQUERY_POSTGRES_PASSWORD='postgres'
 mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=postgres
 ```
 
+cmd:
+
+```cmd
+cd omniquery-backend
+set OMNIQUERY_POSTGRES_URL=jdbc:postgresql://localhost:5432/postgres
+set OMNIQUERY_POSTGRES_USERNAME=postgres
+set OMNIQUERY_POSTGRES_PASSWORD=postgres
+mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=postgres
+```
+
 ## Run Frontend
+
+PowerShell:
 
 ```powershell
 cd omniquery-frontend
@@ -66,17 +101,35 @@ npm.cmd install
 npm.cmd run dev
 ```
 
+cmd:
+
+```cmd
+cd omniquery-frontend
+npm install
+npm run dev
+```
+
 Open `http://localhost:5173`.
 
 ## API Example
+
+PowerShell:
 
 ```powershell
 Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType 'application/json' -Body '{"question":"show recent orders with customer names","tenantId":"tenant_a"}'
 ```
 
+cmd:
+
+```cmd
+curl -X POST http://localhost:8080/api/query -H "Content-Type: application/json" -d "{\"question\":\"show recent orders with customer names\",\"tenantId\":\"tenant_a\"}"
+```
+
 ## Run With LangChain4j
 
 The `llm` profile uses a LangChain4j OpenAI-compatible chat model. By default, OmniQuery reads the API key from `MODEL_API_KEY`, uses DashScope compatible mode, and selects `kimi-k2.6`.
+
+PowerShell:
 
 ```powershell
 cd omniquery-backend
@@ -86,9 +139,27 @@ $env:OMNIQUERY_LLM_MODEL='kimi-k2.6'
 mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=llm
 ```
 
+cmd:
+
+```cmd
+cd omniquery-backend
+set MODEL_API_KEY=your-api-key
+set OMNIQUERY_LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+set OMNIQUERY_LLM_MODEL=kimi-k2.6
+mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=llm
+```
+
 Combine profiles when querying a real database:
 
+PowerShell:
+
 ```powershell
+mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=llm,mysql
+```
+
+cmd:
+
+```cmd
 mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=llm,mysql
 ```
 
@@ -96,15 +167,33 @@ mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=llm,mysql
 
 The `vector-rag` profile stores schema/example embeddings in pgvector. By default, it connects to `jdbc:postgresql://localhost:5432/postgres` with `postgres/root`, reads the embedding key from `EMBEDDING_API_KEY`, and calls SiliconFlow's OpenAI-compatible embedding endpoint with `Qwen/Qwen3-Embedding-8B`.
 
+PowerShell:
+
 ```powershell
 cd omniquery-backend
 $env:EMBEDDING_API_KEY='your-siliconflow-api-key'
 mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=vector-rag
 ```
 
+cmd:
+
+```cmd
+cd omniquery-backend
+set EMBEDDING_API_KEY=your-siliconflow-api-key
+mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=vector-rag
+```
+
 Use it together with the real LLM path:
 
+PowerShell:
+
 ```powershell
+mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=llm,vector-rag
+```
+
+cmd:
+
+```cmd
 mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=llm,vector-rag
 ```
 
@@ -119,21 +208,46 @@ Prerequisites:
 - `MODEL_API_KEY` for DashScope compatible chat model.
 - `EMBEDDING_API_KEY` for SiliconFlow embeddings.
 
+PowerShell:
+
 ```powershell
 .\scripts\run-mysql-demo.ps1 -Build
 ```
 
+cmd:
+
+```cmd
+powershell -ExecutionPolicy Bypass -File scripts\run-mysql-demo.ps1 -Build
+```
+
 Use custom MySQL credentials:
+
+PowerShell:
 
 ```powershell
 .\scripts\run-mysql-demo.ps1 -MysqlUser root -MysqlPassword root -MysqlHost localhost -MysqlPort 3306
 ```
 
+cmd:
+
+```cmd
+powershell -ExecutionPolicy Bypass -File scripts\run-mysql-demo.ps1 -MysqlUser root -MysqlPassword root -MysqlHost localhost -MysqlPort 3306
+```
+
 Then verify tenant isolation:
+
+PowerShell:
 
 ```powershell
 Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType 'application/json' -Body '{"question":"list recent orders with customer names","tenantId":"tenant_a"}'
 Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType 'application/json' -Body '{"question":"list recent orders with customer names","tenantId":"tenant_b"}'
+```
+
+cmd:
+
+```cmd
+curl -X POST http://localhost:8080/api/query -H "Content-Type: application/json" -d "{\"question\":\"list recent orders with customer names\",\"tenantId\":\"tenant_a\"}"
+curl -X POST http://localhost:8080/api/query -H "Content-Type: application/json" -d "{\"question\":\"list recent orders with customer names\",\"tenantId\":\"tenant_b\"}"
 ```
 
 Expected result: `tenant_a` sees 3 order rows, while `tenant_b` sees only 1 row. The response trace should show schema/example retrieval, SQL generation, Druid guard validation, ACL parameter injection, and read-only MySQL execution.
@@ -144,16 +258,28 @@ OmniQuery also exposes a lightweight JSON-RPC tool endpoint at `/api/mcp`. The e
 
 List tools:
 
+PowerShell:
+
 ```powershell
 Invoke-RestMethod -Uri http://localhost:8080/api/mcp -Method POST -ContentType 'application/json' -Body '{"jsonrpc":"2.0","id":"1","method":"tools/list","params":{}}'
 ```
 
+cmd:
+
+```cmd
+curl -X POST http://localhost:8080/api/mcp -H "Content-Type: application/json" -d "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"method\":\"tools/list\",\"params\":{}}"
+```
+
 Call `safe_query`:
+
+PowerShell:
 
 ```powershell
 Invoke-RestMethod -Uri http://localhost:8080/api/mcp -Method POST -ContentType 'application/json' -Body '{"jsonrpc":"2.0","id":"2","method":"tools/call","params":{"name":"safe_query","arguments":{"question":"show total paid amount by customer","tenantId":"tenant_a"}}}'
 ```
 
-## Resume Description
+cmd:
 
-Built a generic NL2SQL query engine with Spring Boot and LangChain4j, including schema/example retrieval, read-only MCP-style tool calling, Druid AST SQL guardrails, policy-driven ACL injection, traceable execution, and H2-backed integration tests.
+```cmd
+curl -X POST http://localhost:8080/api/mcp -H "Content-Type: application/json" -d "{\"jsonrpc\":\"2.0\",\"id\":\"2\",\"method\":\"tools/call\",\"params\":{\"name\":\"safe_query\",\"arguments\":{\"question\":\"show total paid amount by customer\",\"tenantId\":\"tenant_a\"}}}"
+```
