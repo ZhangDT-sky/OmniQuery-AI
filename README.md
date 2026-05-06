@@ -1,5 +1,7 @@
 # OmniQuery AI
 
+[中文说明](README.zh-CN.md)
+
 OmniQuery AI is a compact Java/Spring Boot NL2SQL engine. It turns a natural-language question into SQL, retrieves schema and example context, validates generated SQL with an AST guard, injects tenant ACL conditions, executes read-only queries, and returns a traceable response.
 
 ## Why This Project Exists
