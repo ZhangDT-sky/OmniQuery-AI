@@ -235,6 +235,139 @@ curl -X POST http://localhost:8080/api/query -H "Content-Type: application/json"
 - trace 中可以看到 retrieval、generation、guard、acl、execution 阶段。
 - ACL 阶段会把 SQL 改写为带 `?` 参数的租户条件。
 
+## Docker 一键部署
+
+Docker Compose 会同时启动 MySQL、pgvector、Spring Boot 后端和 React 前端。敏感配置通过 `.env` 注入，不写入镜像，也不提交 Git。
+
+服务组成：
+
+```text
+mysql      MySQL 8.0，初始化 omniquery_demo
+pgvector   PostgreSQL + pgvector
+api        Spring Boot，启用 mysql,llm,vector-rag
+frontend   Nginx 托管前端静态文件
+```
+
+第一次运行前复制环境变量模板：
+
+PowerShell：
+
+```powershell
+Copy-Item .env.example .env
+```
+
+cmd：
+
+```cmd
+copy .env.example .env
+```
+
+然后编辑 `.env`，至少填入：
+
+```env
+MODEL_API_KEY=your-dashscope-api-key
+EMBEDDING_API_KEY=your-siliconflow-api-key
+```
+
+启动：
+
+PowerShell：
+
+```powershell
+docker compose up -d --build
+```
+
+cmd：
+
+```cmd
+docker compose up -d --build
+```
+
+查看服务：
+
+PowerShell：
+
+```powershell
+docker compose ps
+docker compose logs -f api
+```
+
+cmd：
+
+```cmd
+docker compose ps
+docker compose logs -f api
+```
+
+访问地址：
+
+```text
+前端: http://localhost:5173
+后端: http://localhost:8080
+MySQL: localhost:3307
+pgvector: localhost:5433
+```
+
+验证查询：
+
+PowerShell：
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType 'application/json' -Body '{"question":"list recent orders with customer names","tenantId":"tenant_a"}'
+Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType 'application/json' -Body '{"question":"list recent orders with customer names","tenantId":"tenant_b"}'
+```
+
+cmd：
+
+```cmd
+curl -X POST http://localhost:8080/api/query -H "Content-Type: application/json" -d "{\"question\":\"list recent orders with customer names\",\"tenantId\":\"tenant_a\"}"
+curl -X POST http://localhost:8080/api/query -H "Content-Type: application/json" -d "{\"question\":\"list recent orders with customer names\",\"tenantId\":\"tenant_b\"}"
+```
+
+检查 pgvector 文档：
+
+PowerShell：
+
+```powershell
+docker compose exec pgvector psql -U postgres -d postgres -c "SELECT kind, count(*) FROM omniquery_rag_documents GROUP BY kind ORDER BY kind;"
+```
+
+cmd：
+
+```cmd
+docker compose exec pgvector psql -U postgres -d postgres -c "SELECT kind, count(*) FROM omniquery_rag_documents GROUP BY kind ORDER BY kind;"
+```
+
+停止服务：
+
+PowerShell：
+
+```powershell
+docker compose down
+```
+
+cmd：
+
+```cmd
+docker compose down
+```
+
+清理数据卷并重新初始化数据库：
+
+PowerShell：
+
+```powershell
+docker compose down -v
+docker compose up -d --build
+```
+
+cmd：
+
+```cmd
+docker compose down -v
+docker compose up -d --build
+```
+
 ## Vector RAG
 
 启用 `vector-rag` 后，系统会把 schema 和配置化 examples 向量化写入 pgvector。

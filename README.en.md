@@ -252,6 +252,139 @@ curl -X POST http://localhost:8080/api/query -H "Content-Type: application/json"
 
 Expected result: `tenant_a` sees 3 order rows, while `tenant_b` sees only 1 row. The response trace should show schema/example retrieval, SQL generation, Druid guard validation, ACL parameter injection, and read-only MySQL execution.
 
+## Docker One-Command Deployment
+
+Docker Compose starts MySQL, pgvector, the Spring Boot API, and the React frontend together. Secrets are injected through `.env`; they are not baked into images and should not be committed.
+
+Services:
+
+```text
+mysql      MySQL 8.0 with omniquery_demo initialization
+pgvector   PostgreSQL with pgvector
+api        Spring Boot with mysql,llm,vector-rag profiles
+frontend   Nginx serving frontend static files
+```
+
+Copy the environment template before the first run:
+
+PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+cmd:
+
+```cmd
+copy .env.example .env
+```
+
+Then edit `.env` and set at least:
+
+```env
+MODEL_API_KEY=your-dashscope-api-key
+EMBEDDING_API_KEY=your-siliconflow-api-key
+```
+
+Start:
+
+PowerShell:
+
+```powershell
+docker compose up -d --build
+```
+
+cmd:
+
+```cmd
+docker compose up -d --build
+```
+
+Inspect services:
+
+PowerShell:
+
+```powershell
+docker compose ps
+docker compose logs -f api
+```
+
+cmd:
+
+```cmd
+docker compose ps
+docker compose logs -f api
+```
+
+URLs:
+
+```text
+Frontend: http://localhost:5173
+Backend:  http://localhost:8080
+MySQL:    localhost:3307
+pgvector: localhost:5433
+```
+
+Verify query behavior:
+
+PowerShell:
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType 'application/json' -Body '{"question":"list recent orders with customer names","tenantId":"tenant_a"}'
+Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType 'application/json' -Body '{"question":"list recent orders with customer names","tenantId":"tenant_b"}'
+```
+
+cmd:
+
+```cmd
+curl -X POST http://localhost:8080/api/query -H "Content-Type: application/json" -d "{\"question\":\"list recent orders with customer names\",\"tenantId\":\"tenant_a\"}"
+curl -X POST http://localhost:8080/api/query -H "Content-Type: application/json" -d "{\"question\":\"list recent orders with customer names\",\"tenantId\":\"tenant_b\"}"
+```
+
+Check pgvector documents:
+
+PowerShell:
+
+```powershell
+docker compose exec pgvector psql -U postgres -d postgres -c "SELECT kind, count(*) FROM omniquery_rag_documents GROUP BY kind ORDER BY kind;"
+```
+
+cmd:
+
+```cmd
+docker compose exec pgvector psql -U postgres -d postgres -c "SELECT kind, count(*) FROM omniquery_rag_documents GROUP BY kind ORDER BY kind;"
+```
+
+Stop services:
+
+PowerShell:
+
+```powershell
+docker compose down
+```
+
+cmd:
+
+```cmd
+docker compose down
+```
+
+Reset volumes and reinitialize databases:
+
+PowerShell:
+
+```powershell
+docker compose down -v
+docker compose up -d --build
+```
+
+cmd:
+
+```cmd
+docker compose down -v
+docker compose up -d --build
+```
+
 ## Read-Only MCP Tools
 
 OmniQuery also exposes a lightweight JSON-RPC tool endpoint at `/api/mcp`. The endpoint is intentionally read-only: `safe_query` reuses the same NL2SQL engine, SQL guard, ACL rewrite, and JDBC execution path as the HTTP API.
