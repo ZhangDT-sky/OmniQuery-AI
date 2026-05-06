@@ -106,6 +106,36 @@ Use it together with the real LLM path:
 mvn -pl omniquery-api -am spring-boot:run -Dspring-boot.run.profiles=llm,vector-rag
 ```
 
+## Real MySQL Demo
+
+Use the demo script when you want to verify the full external-database path instead of the default H2 database. It creates an isolated `omniquery_demo` MySQL database with `customers` and `orders`, including two tenants for ACL checks.
+
+Prerequisites:
+
+- Local MySQL reachable with `root/root`, or pass different credentials to the script.
+- pgvector running on `localhost:5432` with `postgres/root`.
+- `MODEL_API_KEY` for DashScope compatible chat model.
+- `EMBEDDING_API_KEY` for SiliconFlow embeddings.
+
+```powershell
+.\scripts\run-mysql-demo.ps1 -Build
+```
+
+Use custom MySQL credentials:
+
+```powershell
+.\scripts\run-mysql-demo.ps1 -MysqlUser root -MysqlPassword root -MysqlHost localhost -MysqlPort 3306
+```
+
+Then verify tenant isolation:
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType 'application/json' -Body '{"question":"list recent orders with customer names","tenantId":"tenant_a"}'
+Invoke-RestMethod -Uri http://localhost:8080/api/query -Method POST -ContentType 'application/json' -Body '{"question":"list recent orders with customer names","tenantId":"tenant_b"}'
+```
+
+Expected result: `tenant_a` sees 3 order rows, while `tenant_b` sees only 1 row. The response trace should show schema/example retrieval, SQL generation, Druid guard validation, ACL parameter injection, and read-only MySQL execution.
+
 ## Read-Only MCP Tools
 
 OmniQuery also exposes a lightweight JSON-RPC tool endpoint at `/api/mcp`. The endpoint is intentionally read-only: `safe_query` reuses the same NL2SQL engine, SQL guard, ACL rewrite, and JDBC execution path as the HTTP API.
