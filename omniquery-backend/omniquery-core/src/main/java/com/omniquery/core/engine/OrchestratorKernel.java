@@ -1,5 +1,6 @@
 package com.omniquery.core.engine;
 
+import com.omniquery.core.config.OmniQueryProperties;
 import com.omniquery.core.llm.SqlGenerationService;
 import com.omniquery.core.model.QueryResponse;
 import com.omniquery.core.model.QueryTrace;
@@ -24,6 +25,7 @@ public class OrchestratorKernel {
     private final SqlGuard sqlGuard;
     private final AclRewriter aclRewriter;
     private final JdbcQueryExecutor queryExecutor;
+    private final OmniQueryProperties properties;
 
     public OrchestratorKernel(
         QueryIntentNormalizer normalizer,
@@ -31,7 +33,8 @@ public class OrchestratorKernel {
         SqlGenerationService sqlGenerationService,
         SqlGuard sqlGuard,
         AclRewriter aclRewriter,
-        JdbcQueryExecutor queryExecutor
+        JdbcQueryExecutor queryExecutor,
+        OmniQueryProperties properties
     ) {
         this.normalizer = normalizer;
         this.retrievalService = retrievalService;
@@ -39,6 +42,7 @@ public class OrchestratorKernel {
         this.sqlGuard = sqlGuard;
         this.aclRewriter = aclRewriter;
         this.queryExecutor = queryExecutor;
+        this.properties = properties;
     }
 
     public QueryResponse handle(String tenantId, String question) {
@@ -64,6 +68,17 @@ public class OrchestratorKernel {
             var accessUser = new UserAccessContext(intent.userContext().userId(), intent.userContext().tenantId(), roles);
             var rewritten = aclRewriter.rewrite(guardResult.sql(), accessUser);
             trace.add(new QueryTrace("acl", "ACL policy applied", rewritten));
+
+            var preflightRewrite = aclRewriter.rewrite(generated.sql(), accessUser);
+            int expectedRows = queryExecutor.count(preflightRewrite.sql(), preflightRewrite.parameters());
+            trace.add(new QueryTrace("preflight", "Estimated result size", expectedRows + " rows"));
+            int maxRows = properties.security().getMaxRows();
+            if (expectedRows > maxRows) {
+                String error = "\u67e5\u8be2\u9884\u8ba1\u8fd4\u56de " + expectedRows
+                    + " \u884c\uff0c\u8d85\u8fc7\u5f53\u524d\u4e0a\u9650 " + maxRows
+                    + " \u884c\uff0c\u8bf7\u7f29\u5c0f\u67e5\u8be2\u8303\u56f4\u6216\u589e\u52a0\u7b5b\u9009\u6761\u4ef6\u3002";
+                return new QueryResponse(false, null, generated.sql(), rewritten.sql(), List.of(), error, trace);
+            }
 
             var rows = queryExecutor.query(rewritten.sql(), rewritten.parameters());
             trace.add(new QueryTrace("execution", "Query executed", rows.size() + " rows"));

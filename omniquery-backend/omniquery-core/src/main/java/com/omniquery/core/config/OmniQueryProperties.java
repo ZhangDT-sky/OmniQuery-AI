@@ -14,6 +14,10 @@ public class OmniQueryProperties {
         return security;
     }
 
+    public Security getSecurity() {
+        return security;
+    }
+
     public static class Security {
         private int maxRows = 100;
         private int maxJoins = 3;
