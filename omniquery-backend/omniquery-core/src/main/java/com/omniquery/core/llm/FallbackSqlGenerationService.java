@@ -15,12 +15,28 @@ public class FallbackSqlGenerationService implements SqlGenerationService {
     @Override
     public GeneratedSql generate(QueryIntent intent, RetrievedContext context) {
         String question = intent.normalizedQuestion().toLowerCase();
+        if (question.contains("user correction") && question.contains("paid")) {
+            return new GeneratedSql(
+                "SELECT o.id, c.name, o.status, o.total_amount FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'PAID' ORDER BY o.created_at DESC",
+                List.of("orders", "customers"),
+                List.of("id", "name", "status", "total_amount", "created_at"),
+                "Generated deterministic paid orders query for local correction tests"
+            );
+        }
         if (question.contains("total") || question.contains("sum") || question.contains("amount")) {
             return new GeneratedSql(
                 "SELECT c.name, SUM(o.total_amount) AS total_paid FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'PAID' GROUP BY c.name",
                 List.of("orders", "customers"),
                 List.of("name", "total_amount", "status"),
                 "Generated deterministic aggregate query for local tests"
+            );
+        }
+        if (question.contains("paid")) {
+            return new GeneratedSql(
+                "SELECT o.id, c.name, o.status, o.total_amount FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'PAID' ORDER BY o.created_at DESC",
+                List.of("orders", "customers"),
+                List.of("id", "name", "status", "total_amount", "created_at"),
+                "Generated deterministic paid orders query for local correction tests"
             );
         }
         return new GeneratedSql(

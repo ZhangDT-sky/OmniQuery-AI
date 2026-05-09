@@ -8,6 +8,9 @@ type QueryTrace = {
 };
 
 type QueryResponse = {
+  sessionId: string | null;
+  turnId: string | null;
+  mode: string | null;
   success: boolean;
   answer: string | null;
   rawSql: string | null;
@@ -19,6 +22,7 @@ type QueryResponse = {
 
 function App() {
   const [question, setQuestion] = useState('show recent orders with customer names');
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [response, setResponse] = useState<QueryResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -28,9 +32,11 @@ function App() {
       const res = await fetch('http://localhost:8080/api/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, tenantId: 'tenant_a' }),
+        body: JSON.stringify({ question, tenantId: 'tenant_a', sessionId }),
       });
-      setResponse(await res.json());
+      const nextResponse = await res.json();
+      setResponse(nextResponse);
+      setSessionId(nextResponse.sessionId);
     } finally {
       setLoading(false);
     }
@@ -55,6 +61,7 @@ function App() {
           <div className="result-grid">
             <section>
               <h2>SQL</h2>
+              <p>{response.mode || 'NEW_QUERY'}</p>
               <pre>{response.guardedSql || response.rawSql || response.error}</pre>
             </section>
             <section>
