@@ -25,6 +25,9 @@ omniquery:
       - sleep
       - benchmark
       - load_file
+  session:
+    max-turns: ${OMNIQUERY_SESSION_MAX_TURNS:10}
+    ttl-minutes: ${OMNIQUERY_SESSION_TTL_MINUTES:30}
   llm:
     provider: openai-compatible
     api-key: ${MODEL_API_KEY:}

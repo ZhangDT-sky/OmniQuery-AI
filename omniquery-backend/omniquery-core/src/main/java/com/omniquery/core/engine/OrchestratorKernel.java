@@ -7,6 +7,8 @@ import com.omniquery.core.model.QueryTrace;
 import com.omniquery.core.service.JdbcQueryExecutor;
 import com.omniquery.core.service.QueryIntentNormalizer;
 import com.omniquery.core.session.CorrectionDetector;
+import com.omniquery.core.session.QueryArtifact;
+import com.omniquery.core.session.QueryMode;
 import com.omniquery.core.session.QuerySessionStore;
 import com.omniquery.core.session.QueryTurn;
 import com.omniquery.rag.service.RetrievalService;
@@ -60,12 +62,12 @@ public class OrchestratorKernel {
 
     public QueryResponse handle(String tenantId, String question, String sessionId) {
         List<QueryTrace> trace = new ArrayList<>();
-        String mode = resolveMode(question, sessionId);
+        QueryMode mode = resolveMode(question, sessionId);
         String resolvedQuestion = resolveQuestion(question, sessionId, mode);
         try {
             var intent = normalizer.normalize(tenantId, resolvedQuestion);
             trace.add(new QueryTrace("intent", "Normalized user question", intent));
-            if ("CORRECTION".equals(mode)) {
+            if (QueryMode.CORRECTION == mode) {
                 trace.add(new QueryTrace("session", "Resolved follow-up correction", resolvedQuestion));
             }
 
@@ -109,19 +111,23 @@ public class OrchestratorKernel {
         }
     }
 
-    private String resolveMode(String question, String sessionId) {
-        boolean hasPrevious = sessionStore.find(sessionId).filter(session -> !session.turns().isEmpty()).isPresent();
-        return hasPrevious && correctionDetector.isCorrection(question) ? "CORRECTION" : "NEW_QUERY";
+    private QueryMode resolveMode(String question, String sessionId) {
+        boolean hasPreviousSuccess = sessionStore.find(sessionId)
+            .flatMap(com.omniquery.core.session.QuerySession::lastSuccessfulTurn)
+            .isPresent();
+        return hasPreviousSuccess && correctionDetector.isCorrection(question) ? QueryMode.CORRECTION : QueryMode.NEW_QUERY;
     }
 
-    private String resolveQuestion(String question, String sessionId, String mode) {
-        if (!"CORRECTION".equals(mode)) {
+    private String resolveQuestion(String question, String sessionId, QueryMode mode) {
+        if (QueryMode.CORRECTION != mode) {
             return question;
         }
         return sessionStore.find(sessionId)
-            .flatMap(session -> session.turns().stream().reduce((first, second) -> second))
+            .flatMap(com.omniquery.core.session.QuerySession::lastSuccessfulTurn)
             .map(previous -> "Previous question: " + previous.resolvedQuestion()
-                + "\nPrevious SQL: " + previous.rawSql()
+                + "\nPrevious SQL: " + previous.artifact().sql()
+                + "\nPrevious tables: " + previous.artifact().tables()
+                + "\nPrevious columns: " + previous.artifact().columns()
                 + "\nUser correction: " + question
                 + "\nApply the correction with the smallest SQL change.")
             .orElse(question);
@@ -130,7 +136,7 @@ public class OrchestratorKernel {
     private QueryResponse saveAndRespond(
         String sessionId,
         String tenantId,
-        String mode,
+        QueryMode mode,
         String question,
         String resolvedQuestion,
         com.omniquery.core.model.GeneratedSql generated,
@@ -146,7 +152,7 @@ public class OrchestratorKernel {
     private QueryResponse saveAndRespond(
         String sessionId,
         String tenantId,
-        String mode,
+        QueryMode mode,
         String question,
         String resolvedQuestion,
         com.omniquery.core.model.GeneratedSql generated,
@@ -157,14 +163,24 @@ public class OrchestratorKernel {
         List<QueryTrace> trace,
         String answer
     ) {
+        QueryArtifact artifact = generated == null
+            ? null
+            : new QueryArtifact(
+                generated.sql(),
+                generated.tables(),
+                generated.columns(),
+                List.of(),
+                List.of(),
+                null,
+                rows == null ? 0 : rows.size(),
+                success
+            );
         QueryTurn turn = QueryTurn.of(
             mode,
             question,
             resolvedQuestion,
-            generated == null ? null : generated.sql(),
+            artifact,
             guardedSql,
-            generated == null ? List.of() : generated.tables(),
-            generated == null ? List.of() : generated.columns(),
             rows,
             success,
             error,

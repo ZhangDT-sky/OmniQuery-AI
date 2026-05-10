@@ -1,12 +1,14 @@
 package com.omniquery.core.model;
 
+import com.omniquery.core.session.QueryMode;
+
 import java.util.List;
 import java.util.Map;
 
 public record QueryResponse(
     String sessionId,
     String turnId,
-    String mode,
+    QueryMode mode,
     boolean success,
     String answer,
     String rawSql,
@@ -24,6 +26,6 @@ public record QueryResponse(
         String error,
         List<QueryTrace> trace
     ) {
-        this(null, null, "NEW_QUERY", success, answer, rawSql, guardedSql, rows, error, trace);
+        this(null, null, QueryMode.NEW_QUERY, success, answer, rawSql, guardedSql, rows, error, trace);
     }
 }

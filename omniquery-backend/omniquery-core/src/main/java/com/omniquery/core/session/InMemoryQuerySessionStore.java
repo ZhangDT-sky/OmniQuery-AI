@@ -1,5 +1,6 @@
 package com.omniquery.core.session;
 
+import com.omniquery.core.config.OmniQueryProperties;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -13,10 +14,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class InMemoryQuerySessionStore implements QuerySessionStore {
 
-    private static final int MAX_TURNS = 10;
-    private static final Duration TTL = Duration.ofMinutes(30);
-
     private final ConcurrentHashMap<String, QuerySession> sessions = new ConcurrentHashMap<>();
+    private final OmniQueryProperties properties;
+
+    public InMemoryQuerySessionStore(OmniQueryProperties properties) {
+        this.properties = properties;
+    }
 
     @Override
     public QuerySession append(String sessionId, String tenantId, QueryTurn turn) {
@@ -29,8 +32,9 @@ public class InMemoryQuerySessionStore implements QuerySessionStore {
             }
             List<QueryTurn> turns = new ArrayList<>(existing.turns());
             turns.add(turn);
-            if (turns.size() > MAX_TURNS) {
-                turns = turns.subList(turns.size() - MAX_TURNS, turns.size());
+            int maxTurns = Math.max(1, properties.session().getMaxTurns());
+            if (turns.size() > maxTurns) {
+                turns = turns.subList(turns.size() - maxTurns, turns.size());
             }
             return new QuerySession(id, tenantId, List.copyOf(turns), existing.createdAt(), now);
         });
@@ -55,6 +59,7 @@ public class InMemoryQuerySessionStore implements QuerySessionStore {
     }
 
     private boolean isExpired(QuerySession session, Instant now) {
-        return session.updatedAt().plus(TTL).isBefore(now);
+        int ttlMinutes = Math.max(1, properties.session().getTtlMinutes());
+        return session.updatedAt().plus(Duration.ofMinutes(ttlMinutes)).isBefore(now);
     }
 }

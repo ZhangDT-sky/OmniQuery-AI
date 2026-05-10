@@ -8,13 +8,11 @@ import java.util.Map;
 
 public record QueryTurn(
     String turnId,
-    String mode,
+    QueryMode mode,
     String userQuestion,
     String resolvedQuestion,
-    String rawSql,
+    QueryArtifact artifact,
     String guardedSql,
-    List<String> tables,
-    List<String> columns,
     int rowCount,
     boolean success,
     String error,
@@ -22,13 +20,11 @@ public record QueryTurn(
     Instant createdAt
 ) {
     public static QueryTurn of(
-        String mode,
+        QueryMode mode,
         String userQuestion,
         String resolvedQuestion,
-        String rawSql,
+        QueryArtifact artifact,
         String guardedSql,
-        List<String> tables,
-        List<String> columns,
         List<Map<String, Object>> rows,
         boolean success,
         String error,
@@ -39,10 +35,8 @@ public record QueryTurn(
             mode,
             userQuestion,
             resolvedQuestion,
-            rawSql,
+            artifact,
             guardedSql,
-            tables,
-            columns,
             rows == null ? 0 : rows.size(),
             success,
             error,

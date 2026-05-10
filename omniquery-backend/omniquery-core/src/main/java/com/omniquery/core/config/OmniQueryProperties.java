@@ -9,6 +9,7 @@ import java.util.Set;
 public class OmniQueryProperties {
 
     private final Security security = new Security();
+    private final Session session = new Session();
 
     public Security security() {
         return security;
@@ -16,6 +17,14 @@ public class OmniQueryProperties {
 
     public Security getSecurity() {
         return security;
+    }
+
+    public Session session() {
+        return session;
+    }
+
+    public Session getSession() {
+        return session;
     }
 
     public static class Security {
@@ -54,6 +63,27 @@ public class OmniQueryProperties {
 
         public void setDangerousFunctions(Set<String> dangerousFunctions) {
             this.dangerousFunctions = dangerousFunctions;
+        }
+    }
+
+    public static class Session {
+        private int maxTurns = 10;
+        private int ttlMinutes = 30;
+
+        public int getMaxTurns() {
+            return maxTurns;
+        }
+
+        public void setMaxTurns(int maxTurns) {
+            this.maxTurns = maxTurns;
+        }
+
+        public int getTtlMinutes() {
+            return ttlMinutes;
+        }
+
+        public void setTtlMinutes(int ttlMinutes) {
+            this.ttlMinutes = ttlMinutes;
         }
     }
 }
